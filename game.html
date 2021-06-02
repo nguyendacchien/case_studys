@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 
 <body style="background-color: pink">
 <canvas id="game" width="1000px" height="700px" style="border: 1px solid pink; "></canvas>
 <div id="div">
 <p id="mang"></p>
-<span id="score"></span>
+<p id="score"></p>
     <br>
 <button id="restart" onclick="restart()">restart</button>
 <button id="stop" onclick="stops()" >stop</button>
+    <p id="maxScore"></p>
 
 </div>
-<audio autoplay id="audio" loop>
-    <source src="img/audio.mp3">
+<audio id="audio" loop>
+    <source src="../img/audio.mp3">
 </audio>
 </body>
 </html>
-<script src="scrip/Enemy.js"></script>
-<script src="scrip/User.js"></script>
-<script src="scrip/bullet.js"></script>
+<script src="../scrip/Enemy.js"></script>
+<script src="../scrip/User.js"></script>
+<script src="../scrip/bullet.js"></script>
 <script>
     let canvas = document.getElementById('game')
     let ctx = canvas.getContext('2d')
@@ -36,32 +37,16 @@
     let isturn = 1
     let checks=true
     let stop = false
-    //
     let speedu;
     let wUser=80;
     let hUser=80;
     let bUser = canvas.height - 100;
     let aUser = canvas.width / 2;
     let user;
-    //
     let yB = 625;
     let rec =[]
     let bulletR=5
-
-    function drawBullet() {  //vẽ đạn
-        let bullet = new Bullet(aUser+38, yB, bulletR)
-        rec.push(bullet)
-    }
-    function moveBullet(){ // đạn bắn
-        for (let i = 0;i< rec.length;i++){
-            rec[i].bultY -=30;
-            rec[i].createBullet();
-        }
-        if (rec[i].bultY<=0){
-            rec.splice(i,1)
-        }
-    }//
-
+    let audio= document.getElementById('audio')
     function drawUser() { // vẽ máy bay
         user = new User(aUser, bUser, wUser, hUser);
         user.createUser();
@@ -93,7 +78,19 @@
     }
     window.addEventListener("keydown", moveUser);
 
-
+    function drawBullet() {  //vẽ đạn
+        let bullet = new Bullet(aUser+38, yB, bulletR)
+        rec.push(bullet)
+    }
+    function moveBullet(){ // đạn bắn
+        for (let i = 0;i< rec.length;i++){
+            rec[i].bultY -=30;
+            rec[i].createBullet();
+        }
+        if (rec[i].bultY<=0){
+            rec.splice(i,1)
+        }
+    }//
     function randomNumber(min, max) { //random số
         return Math.floor(Math.random() * max - min) + min
     }
@@ -114,6 +111,7 @@
         }
     }
     function moveEnemy() { // ruồi di chuyển
+        audio.play();
         for (let i = 0; i < stone.length; i++) {
             stone[i].yEnemy += stone[i].speedY;
             if (stone[i].xEnemy < user.aUser + wUser - 20 && stone[i].xEnemy > user.aUser) {  //va chạm với máy bay
@@ -131,6 +129,10 @@
                         stone.splice(i, 1)
                         rec.splice(j, 1)
                         score++
+                    if (score > hiscoreval) {
+                        hiscoreval = score;
+                        localStorage.setItem("max", JSON.stringify(hiscoreval));
+                    }
                     }
                 }
             }
@@ -138,6 +140,7 @@
                 stone.splice(i, 1);
             }
         }
+        document.getElementById('maxScore').innerHTML = 'maxScore: ' + max
         document.getElementById('score').innerHTML ='score: '+ score
         document.getElementById('mang').innerHTML = 'số lần chơi: ' + isturn
         if (stone.length <= 10) { //dk tạo thêm ruồi
@@ -151,6 +154,7 @@
         ctx.font = "55px Arial";
         ctx.fillStyle = 'red';
         ctx.fillText("GAME-OVER", 350, 300);
+        audio.pause();
         saveScoreArray()
 
     }
@@ -181,5 +185,12 @@
         let user = [name];
         localStorage.setItem('score', JSON.stringify(user));
         clearInterval(myLet)
+    }
+    let max = localStorage.getItem("max");
+    if (max < score) {
+        hiscoreval = 0;
+        localStorage.setItem("max", JSON.stringify(hiscoreval))
+    } else {
+        hiscoreval = JSON.parse(max);
     }
 </script>
