@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="background-color: pink">
+<canvas id="game" width="1000px" height="700px" style="border: 1px solid pink; "></canvas>
+<div id="div">
+<p id="mang"></p>
+<span id="score"></span>
+    <br>
+<button id="restart" onclick="restart()">restart</button>
+<button id="stop" onclick="stops()" >stop</button>
+
+</div>
+<audio autoplay id="audio" loop>
+    <source src="img/audio.mp3">
+</audio>
+</body>
+</html>
+<script src="scrip/Enemy.js"></script>
+<script src="scrip/User.js"></script>
+<script src="scrip/bullet.js"></script>
+<script>
+    let canvas = document.getElementById('game')
+    let ctx = canvas.getContext('2d')
+    let x;
+    let y;
+    let speed = 5;
+    let radius = 30;
+    let stone = []
+    let score = 0
+    let isturn = 1
+    let checks=true
+    let stop = false
+    //
+    let speedu;
+    let wUser=80;
+    let hUser=80;
+    let bUser = canvas.height - 100;
+    let aUser = canvas.width / 2;
+    let user;
+    //
+    let yB = 625;
+    let rec =[]
+    let bulletR=5
+
+    function drawBullet() {  //vẽ đạn
+        let bullet = new Bullet(aUser+38, yB, bulletR)
+        rec.push(bullet)
+    }
+    function moveBullet(){ // đạn bắn
+        for (let i = 0;i< rec.length;i++){
+            rec[i].bultY -=30;
+            rec[i].createBullet();
+        }
+        if (rec[i].bultY<=0){
+            rec.splice(i,1)
+        }
+    }//
+
+    function drawUser() { // vẽ máy bay
+        user = new User(aUser, bUser, wUser, hUser);
+        user.createUser();
+        // console.log(aUser)
+    }
+    function moveUser(evt){
+        switch (evt.which) {
+            case 37:
+                moveLeft();
+                break;
+            case 39:
+                moveRight();
+                break;
+        }
+    }
+    function moveRight(){ // di chuyển phải
+        speedu=10;
+        aUser += speedu;
+        if (aUser>=canvas.width-wUser){
+            aUser=canvas.width-wUser;
+        }
+    }
+    function moveLeft(){  // di chuyển trái
+        speedu=10;
+        aUser -= speedu;
+        if (aUser<wUser-wUser){
+            aUser=wUser-wUser;
+        }
+    }
+    window.addEventListener("keydown", moveUser);
+
+
+    function randomNumber(min, max) { //random số
+        return Math.floor(Math.random() * max - min) + min
+    }
+
+    function creat(number) { //tạo ruồi
+        for (let i = 0; i < number; i++) {
+            x = randomNumber(100, canvas.width);
+            y = 1;
+            // radius = randomNumber(50, 100);
+            let enemy = new Enemy(x, y, radius, speed);
+            stone.push(enemy);
+        }
+    }
+    creat(10);
+    function drawEnemy() { //vẽ ruồi
+        for (let i = 0; i < stone.length; i++) {
+            stone[i].createEnemy(canvas);
+        }
+    }
+    function moveEnemy() { // ruồi di chuyển
+        for (let i = 0; i < stone.length; i++) {
+            stone[i].yEnemy += stone[i].speedY;
+            if (stone[i].xEnemy < user.aUser + wUser - 20 && stone[i].xEnemy > user.aUser) {  //va chạm với máy bay
+                if (stone[i].yEnemy > user.bUser && stone[i].yEnemy < user.bUser + hUser) {
+                    stone.splice(i, 1);
+                    isturn--
+                    if (isturn<0) return checks = false
+                }
+            }
+            for (let i = 0; i < stone.length; i++) { //va chạm với đạn
+                for (let j = 0; j < rec.length; j++) {
+                    if (stone[i].xEnemy < rec[j].bultX + bulletR &&
+                        stone[i].xEnemy + radius > rec[j].bultX&&
+                        stone[i].yEnemy+radius > rec[i].bultY) {
+                        stone.splice(i, 1)
+                        rec.splice(j, 1)
+                        score++
+                    }
+                }
+            }
+            if (stone[i].yEnemy > canvas.height + stone[i].radius) {
+                stone.splice(i, 1);
+            }
+        }
+        document.getElementById('score').innerHTML ='score: '+ score
+        document.getElementById('mang').innerHTML = 'số lần chơi: ' + isturn
+        if (stone.length <= 10) { //dk tạo thêm ruồi
+            creat(2);
+        }
+    }
+    function checkWind(){ //  check game over
+        canvas = document.getElementById('game');
+        ctx = canvas.getContext('2d');
+
+        ctx.font = "55px Arial";
+        ctx.fillStyle = 'red';
+        ctx.fillText("GAME-OVER", 350, 300);
+        saveScoreArray()
+
+    }
+    function stops(){ // stop
+        if (stop===false){
+            clearInterval(myLet)
+            document.getElementById('stop').innerHTML = `stop`
+        }
+    }
+
+
+    function main() { // vẽ lại
+        if (!checks)return checkWind()
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawEnemy();
+        drawUser();
+        moveEnemy();
+        drawBullet();
+        moveBullet();
+    }
+
+    let myLet = setInterval(main, 60);
+    function restart(){ // restart game
+        location.reload();
+    }
+    function saveScoreArray() { // lưu Name
+        let name = prompt('score: '+ score+ '     What is your name? ');
+        let user = [name];
+        localStorage.setItem('score', JSON.stringify(user));
+        clearInterval(myLet)
+    }
+</script>
